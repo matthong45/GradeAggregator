@@ -31,7 +31,7 @@ def get_argv_file ():
     return input_file
 
 # Create a new filename from an existing one by appending a filename prefix
-def create_file_name (existing_file, prefix):
+def get_output_file_name (existing_file, prefix):
     return os.path.dirname(existing_file) + "\\" + prefix + os.path.basename(existing_file)
 
 # Check if output_file exists and is newer than input_file

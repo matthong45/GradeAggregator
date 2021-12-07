@@ -1,7 +1,7 @@
 """
-TsKAggregator - take an exported spreadsheet from TSK and turn it into a grade
-* Input: Optional path to a grading .xlsx exported from TSK; if missing the the most recent .xlsx file in the download folder is used
-* Output: A file named "Aggregate " + inputFileName, which is auto-launched into excel
+TsKAggregator - take an exported spreadsheet from TSK and and aggregate it in a manner suitable for import to Synergy
+
+This script provides an interface which is called from GradeAggregator, and is not meant to be called directly
 
 The aggregation works as follows:
 * For each student, aggregates are calculated per lesson:
@@ -20,35 +20,28 @@ E.g., if Python is installed from software center, then navigating to the script
 pip install pandas      - dataframes for data maniupulation
 pip install openpyxl    - to parse .xlsx files
 """
-# Configuration variables
-work_score_weight = .5
-assessment_score_weight = .5
 
 # Libraries
 import pandas as pd
 import re
-import sys
 import GradeUtils
 
-# Get the input file
-usage = """
-TskAggregator.py [fileName]
-Where fileName is an exported TechSmartKids grading spreadsheet.
-If filename is missing, default to finding the most recent .xlsx file in the download folder
-"""
 
-# Get the input file to process; either command line arg or latest export in download directory
-def get_input_file ():
-    input_file=GradeUtils.get_argv_file()
-    if input_file is None:
-        download_dir = GradeUtils.get_download_dir()
-        input_file = GradeUtils.get_latest (download_dir + r"\CS20*.xlsx")
-        if input_file is None:
-            print ("Can't find CS20*.xlsx in " + download_dir)
-    return input_file
+# Configuration variables
+work_score_weight = .5
+assessment_score_weight = .5
 
-#
-def tsk_aggregate (input_file, output_file):
+# The name of this aggregator
+def name ():
+    return "Tech Smart Aggregator"
+
+# Get the default input file = the latest exported TSK grade sheet in the download folder
+def get_default_input_file ():
+    download_dir = GradeUtils.get_download_dir()
+    return GradeUtils.get_latest (download_dir + r"\CS20*.xlsx")
+
+# Aggregate an input file into an output file
+def aggregate (input_file, output_file):
     # Read the input file
     df = pd.read_excel(input_file, header=None)
 
@@ -128,6 +121,9 @@ def tsk_aggregate (input_file, output_file):
     df = df.set_index(["Last name", "First name"]) 
     df = df.groupby(by=df.columns, axis=1).sum()
 
+    # Blank column as separator for the score aggregates (aggregates of aggregates)
+    df["  "] = [None] * df.shape[0]
+
     # Compute overall assessment grade (% of points scored across all lessons)
     assessment_cols = [col for col in df.columns if 'Assessment' in col]
     assessment_col_name = "Assessment grade"
@@ -145,17 +141,9 @@ def tsk_aggregate (input_file, output_file):
 
     # Save the results to the output file and launch excel
     df.to_excel(output_file)
-    GradeUtils.launch_excel (output_file)
 
-# Get the input file to process, reaggregate if (derived) aggregate output file is not current
-input_file = get_input_file()
-if input_file is None:
-    print ("Skipping TechSmart aggregation since there are no files to aggregate")
-else:
-    print ("Using " + input_file)
-    output_file = GradeUtils.create_file_name(input_file, "Aggregated ")
-    if GradeUtils.is_current (output_file, input_file):
-        print ("Aggregate file is already current: " + output_file)
-    else:
-        tsk_aggregate (input_file, output_file)
-
+class TskAggregator:
+    def __init__ (self):
+        self.name = name
+        self.aggregate = aggregate
+        self.get_default_input_file = get_default_input_file
