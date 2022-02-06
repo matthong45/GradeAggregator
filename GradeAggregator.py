@@ -1,5 +1,5 @@
 """
-GradeAggregator.py - take exported spreadsheets from our CS teaching
+GradeAggregator.py - Take exported spreadsheets from our CS teaching
 platforms and transform them to a format suitable for import to Synergy
 
 Author: Marc Shepard
@@ -23,9 +23,11 @@ if len(argv) >= 1:
         dir = cwd + "\\" + dir
     chdir(dir)
 
+# These aggregators do the heavy lifting, in a couse specific manner (since the exported spreadsheets are all quite different)
 aggregators = [TskAggregator(), StemCspAggregator(), StemCsaAggregator()]
 
 for aggregator in aggregators:
+    # Let each aggregator do it's thing
     print()
     input_file = aggregator.get_default_input_file()
     aggregator_name = aggregator.name()
@@ -46,7 +48,10 @@ for aggregator in aggregators:
     else:
         aggregator.aggregate(input_file, agg_file)
     
+    # Launch excel on the output file, so teacher can have a look
     GradeUtils.launch_excel (agg_file)
+
+    # If configured, also transform the aggregation in a manner suitable for Synergy bulk import, and show those files as well
     if GradeUtils.synergy_import_configured():
         output_dir = GradeUtils.get_synergy_output_dir(agg_file)
         files = GradeUtils.agg_to_synergy (agg_file, output_dir)

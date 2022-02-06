@@ -1,10 +1,14 @@
+"""
+GradeUtils.py - Support methods for the other grading scripts
+
+Author: Marc Shepard
+"""
+from operator import index
 import sys
 import os
 import glob
 import winreg
 import subprocess
-
-import pandas
 
 # Launch excel on a given spreadsheet file
 def launch_excel (file):
@@ -47,9 +51,63 @@ def is_current (output_file, input_file):
         return False
     return True
 
-# Create student data from info in Roster.csv
-# It includes parsing out student first name and last name (which might both include spaces) and removing
-# the middle initial if present (if last character is a ".")
+
+# Support for synergy bulk import is implemented below
+from pandas import DataFrame, read_csv
+from openpyxl.utils.dataframe import dataframe_to_rows
+from openpyxl import Workbook
+
+roster_file_name = "Roster.csv"
+
+import datetime
+def is_date (text):
+    try:
+        datetime.datetime.strptime(text, '%m/%d/%Y')
+        return True
+    except ValueError:
+        return False
+
+# Synergy requires due dates for each assignment
+# We'll keep this data in a file called "<course> due dates.csv"
+# We'll ask teachers to supply the dates when we see new assignments for the first time
+# As a future enhancement, we should auto-generate this for TSK rather than ask (but for STEM we always need to ask)
+def get_assignment_due_dates (course, assignments):
+    # If the file "<course> due dates.csv" doesn't exist, create it
+    file_name = course + " due dates.csv"
+    if not os.path.exists(file_name):
+        print ("Creating " + file_name)
+        df = DataFrame()
+        for col in ["ASSIGNMENT_NAME", "ASSIGNMENT_DATE"]:
+            df[col] = ""
+        df.to_csv(file_name, index=False)
+
+    # Open "<course> due dates.csv" and ask the teacher to supply dates for any new assignments
+    df = read_csv(file_name)
+    df = df.set_index("ASSIGNMENT_NAME")
+    new_dates = False
+    for assignment in assignments:
+        if assignment.strip() == "":
+            break
+        if not assignment in df.index:
+            date = "invalid"
+            while date != "skip" and not is_date(date):
+                date = input ("What is the due date for " + assignment + " (d/m/yyyy or type \"skip\" if it should not be graded)? ")
+            df.loc[assignment] = [date]
+            new_dates = True
+
+    # If there were any changes, save them back
+    if new_dates:
+        print ("Saving due dates to \"" + file_name + "\"")
+        df.to_csv(file_name, index=True)
+
+    # create a dictionary of assignments -> due dates
+    dict = {}
+    for assignment in df.index:
+        dict[assignment] = df.loc[assignment]["ASSIGNMENT_DATE"]
+
+    return dict
+
+# Student data parsed from Roster.csv
 class student:
     def __init__(self, period, course, student_name, sis, alias):
         self.period = period
@@ -71,13 +129,6 @@ class student:
             s += " (" + self.alias + ")"
         s += "\t" + "P" + self.period + " " + self.course
         return s;
-
-# Support for synergy bulk import is implemented below
-from pandas import DataFrame, read_csv
-from openpyxl.utils.dataframe import dataframe_to_rows
-from openpyxl import Workbook
-
-roster_file_name = "Roster.csv"
 
 # Teacher must add Roster.csv (exported from Synergy) to this directory to enable Synergy import
 def synergy_import_configured():
@@ -152,6 +203,8 @@ def agg_to_synergy (input_file, output_dir):
             print (roster_file_name + " maps students for this class into to multiple courses: " + course + " and " + student_info.course + " - skipping Synergy bulk import formatting")
             return None
 
+        due_dates = get_assignment_due_dates (course, df.columns[2:])
+
         for column_name in df.columns[2:]:
             if column_name.strip() == "":       # A blank column is used to separate things that go in Synergy from aggregates of those things
                 break                           # We never want to import the "aggregates of aggregates" that follow
@@ -173,7 +226,9 @@ def agg_to_synergy (input_file, output_dir):
             if assignment_type is None:
                 print ("Can't parse assignment type for " + assignment_name + " - skipping Synergy bulk import formatting")
                 return None
-            assignment_date = "2/3/2022"
+            assignment_date = due_dates[assignment_name]
+            if assignment_date == "skip":
+                continue
             output_row = [id, first_name, last_name, assignment_name, assignment_description, overall_score, max_points, assignment_type, assignment_date]
             
             period = student_info.period
@@ -183,7 +238,6 @@ def agg_to_synergy (input_file, output_dir):
                 for col in ["STUDENT_PERM_ID", "STUDENT_FIRST_NAME", "STUDENT_LAST_NAME", "ASSIGNMENT_NAME", "ASSIGNMENT_DESCRIPTION",
                             "OVERALL_SCORE", "POINTS", "ASSIGNMENT_TYPE", "ASSIGNMENT_DATE"]:
                     sdf[col] = ""
-                #sdf["OVERALL_SCORE"] = sdf["OVERALL_SCORE"].astype(str)     # So a score of 4/4 is not shown in the spreadsheet at April 4th
                 sdf_dict[period] = sdf
             sdf = sdf_dict[period]
             sdf.loc[len(sdf.index)] = output_row
