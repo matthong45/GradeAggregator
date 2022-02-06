@@ -7,8 +7,6 @@ The aggregation works as follows:
 * For each student, aggregates are calculated per lesson and category
 * For each student, overall grades are also calculated as sanity check that our calculation = STEM calculation
 * Columns are dropped unless at least half the students have a recorded grade (non-na value)
-* Missing values (na's) for non-dropped columns are imputed as avg values for each column to handle students
-* who joined late or missed have a late assignment.
 
 Prereqs for running this script: Python 3.5+ + pandas + openpyxl
 E.g.; if Python is installed from software center, then navigating to the scripts directory and:
@@ -39,7 +37,7 @@ def trace(msg):
 
 # The name of this aggregator
 def name ():
-    return "Stem CSA Aggregator"
+    return "STEM AP Comp Sci A Aggregator"
 
 # Get the default input file = the latest exported STEM CSP grade sheet in the download folder
 def get_default_input_file ():
@@ -55,7 +53,7 @@ def aggregate (input_file, output_file):
     df = df.loc[:, df.iloc[0] != "(read only)"]                 # Drop STEM aggregates
     df = df.loc[:, df.iloc[0] != "0"]                           # Drop unscored columns
     df = df.set_index(["Student", "Section"])                   # Index on student name/section
-    df.dropna (axis=1, thresh=int(df.shape[0]/2), inplace=True) # Only keep columns if >1/2 students have submitted
+    df.dropna (axis=1, thresh=int(df.shape[0]/4), inplace=True) # Only keep columns if >1/4 students have submitted
     #df = df.apply(lambda x: x.fillna(x.mean()),axis=0)          # Add imputed values for missing entries
 
     # Change the column names to what we want to aggregate on: <unit #> <category>

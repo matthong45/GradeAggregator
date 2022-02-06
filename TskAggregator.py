@@ -5,15 +5,16 @@ This script provides an interface which is called from GradeAggregator, and is n
 
 The aggregation works as follows:
 * For each student, aggregates are calculated per lesson:
-    * An aggregate score is computed for the "work" (homework + classwork) and the assessments
-    * The work score is calculated by giving 1 point if the work turned in, has no syntax errors, and contains
+    * An aggregate score is computed for assignments, quizzes/lesson checks, and the unit exam
+    * Each assignment is scored 0 or 1: 1 point if the work turned in, has no syntax errors, and contains
       at half the number of expected lines of code (coding problems) or half the number of correct answers 
-      (for warm-ups); otherwise it's a zero
-    * The assessment score is the number of questions answered correctly
+      (for warm-ups); otherwise it's a 0
+    * Exams, quizzes, and lesson check scores are the number of questions answered correctly
 * For each student, overall grades are also calculated:
-    * Assessment grade = % of assessment points scores
-    * Work grade = % of work points scored
-    * Overall grade = 50% work grade + 50% assessment grade (weights are configurable)
+    * Exam grade = % of points on unit exams
+    * Quiz grade = % of points on quizzes and lesson checks
+    * Assignment grade = % of points on assignments
+    * Overall grade = 50% assignments + 30% unit exams + 20% quizzes and lesson checks (weights are configurable)
 
 Prereqs for running this script: Python 3.5+ + pandas + openpyxl.
 E.g., if Python is installed from software center, then navigating to the scripts directory and:
@@ -26,14 +27,14 @@ import pandas as pd
 import re
 import GradeUtils
 
-
 # Configuration variables
-work_score_weight = .5
-assessment_score_weight = .5
+assignment_score_weight = .5
+exam_score_weight       = .3
+quiz_score_weight       = .2
 
 # The name of this aggregator
 def name ():
-    return "Tech Smart Aggregator"
+    return "Tech Smart Kids Aggregator"
 
 # Get the default input file = the latest exported TSK grade sheet in the download folder
 def get_default_input_file ():
@@ -48,31 +49,42 @@ def aggregate (input_file, output_file):
     # There are six header rows; we'll extract the info we need, create column names based on that, and then remove the header rows
     # In particular, we'll extract info from rows 0 (unit number), 1 (lesson number) and 3 (category)
     # We don't use info in rows  2 (exercise title), 4 (date in was done in class), or 5
-    # We'll put the results (what we indend to be the column names) temporarily in row 0
+    # We'll put the results (what we indend to be the column names) in a list called col_names
     unit_num="0"
     lesson=""
+    col_names = ["Last name", "First name", "ID"]   # The first three columns are fixed
     # Parsing logic: A nan header value means "use the previous row value", and non-nan values needs parsing
     for i in range (3, df.shape[1]):
         if pd.isna(df.loc[0][i]) == False:
             unit_num = df.loc[0][i][5]                          # Row 0 format is "Unit #: xxx", so 5th element is the actual #
         if pd.isna(df.loc[1][i]) == False:
-            lesson = df.loc[1][i].replace ("Lesson ", "")       # Row 1 format is "Lesson #: xxx", so extract the lesson number
-            lesson = unit_num + "." + lesson[:lesson.find(":")] # And transform to "u.l" (u = unit #, l = lesson #)
+            l = df.loc[1][i]                                    # Row 1 format is "Lesson #: xxx" - let's extract the lesson #
+            l = l.replace ("Lesson ", "")                       # Now we have just "#: xxx"
+            l = l[:l.find(":")]                                 # Now we have just "#"
+            if l == "Q":                                        # If a quiz, append Q to lesson number to lesson strings are ordered by due data
+                lesson += "Q"
+            elif l.isdigit() or l=="T":                         # If it's a numberic lesson number of test or quiz, create a new lesson name for aggregation 
+                lesson = unit_num + "." + l                     # We don't create new lesson aggregate names for the little "P" "PLx, "RA" exercises
         if df.loc[3][i] == "Assessment":
-            df.loc[0][i] = lesson + " Assessment"               # And append the category (if it's Work or Assessment)
+            if df.loc[2][i].startswith("Practice Test"):
+                col_names.append(lesson + " Assignment")        # Treat the practice test like an assignment
+            elif lesson.endswith("T"):
+                col_names.append(lesson + " Exam")              # Lesson x.T assessments are exams
+            else:
+                col_names.append(lesson + " Quiz")              # Other assessments are lesson check or unit quizzes
         else:
-            df.loc[0][i] = lesson + "  Work"
-    # First three column names are fixed and don't need parsing; first name, last name, and student ID
-    df.loc[0][0] = "Last name"
-    df.loc[0][1] = "First name"
-    df.loc[0][2] = "Student ID"
-    # Now set the data frame column names to the above (format is "u.l category"), and then remove the no longer needed header rows
-    df.columns = df.loc[0]
-    df = df.drop(labels=range(0,5), axis=0)
-    # Drop the student ID column - we do't need it
-    df = df.drop(labels="Student ID", axis=1)
-    # Drop na columns - these are things that were skipped or not yet reached
-    df = df.dropna(axis=1, how='all')
+            col_names.append(lesson + " Assignment")            # Everything else is an assignment
+
+    # Set the column names and drop the no-longer needed header rows    
+    df.columns = col_names
+    df.drop(labels=range(0,5), axis=0, inplace=True)
+
+    # Create an index column called "Student" of the form "last, first", drop the other three header columns
+    df.insert(0, "Student", df["Last name"].str.cat(df["First name"], sep=", "))
+    df.drop(columns=["Last name", "First name", "ID"], inplace=True)
+
+    # Keep those columns for which at least 1/4 the students have turned something in
+    df.dropna (axis=1, thresh=int(df.shape[0]/4), inplace=True) # Can change to how='all" instead of thresh to only drop if no one has turned something in
 
     # Now let's clean up the cells - replacing text with numbers we can use for scoring
     # Work columns are scored either 1 (submitted, no syntax errors, at least half the expected lines of code), else 0
@@ -92,7 +104,6 @@ def aggregate (input_file, output_file):
     # During the iteration, temporarily rename the columns so they have unique names
     max_score = [1] * df.shape[1]   # By default, assume max points for a column is 1 (overridden below for assessment columns)
     max_score[0] = "Max score"
-    max_score[1] = ""
     columns = df.columns
     df.columns = range(0, df.shape[1])
     for c in df.columns[2:]:
@@ -102,7 +113,7 @@ def aggregate (input_file, output_file):
                 match = re.findall("\d+", val)
                 a = int(match[0])
                 b = int(match[1])
-                if columns[c].find("Work") != -1:
+                if columns[c].find("Assignment") != -1:
                     if a/b >= .5:
                         df.loc[r][c] = 1
                     else:
@@ -112,35 +123,45 @@ def aggregate (input_file, output_file):
                     max_score[c] = b
     df.columns = columns
 
-    # Finall, add a header row that represents the max points that this row is worth
+    # Finally, add a header row that represents the max points that this row is worth
     df.loc[0] = max_score
     df = df.sort_index()
     df.index = range (df.shape[0])
 
     # Sum up all columns with the same name
-    df = df.set_index(["Last name", "First name"]) 
+    df = df.set_index("Student")
+    df = df.apply(pd.to_numeric)    # Sanity check that all cells are numeric
     df = df.groupby(by=df.columns, axis=1).sum()
+
+    # Add a dummy section column at the front
+    df.insert(0, "Section", ["Default"] * df.shape[0])
 
     # Blank column as separator for the score aggregates (aggregates of aggregates)
     df["  "] = [None] * df.shape[0]
 
-    # Compute overall assessment grade (% of points scored across all lessons)
-    assessment_cols = [col for col in df.columns if 'Assessment' in col]
-    assessment_col_name = "Assessment grade"
-    df[assessment_col_name] = df[assessment_cols].sum(axis=1)
-    df[assessment_col_name] = (.49 + 100*df[assessment_col_name]/df[assessment_col_name][0]).astype(int)
+    # A couple of variables to help with computation
+    agg_names = ["Exam", "Quiz", "Assignment"]
+    agg_weights = [exam_score_weight, assignment_score_weight, quiz_score_weight]
+    
+    # Compute overall exam grade (% of points scored across all lessons)
+    for i in range(len(agg_names)):
+        cols = [col for col in df.columns if agg_names[i] in col]
+        col_name = agg_names[i] + " grade"
+        df[col_name] = df[cols].sum(axis=1)
+        if df[col_name][0] != 0:
+            df[col_name] = (.49 + 100*df[col_name]/df[col_name][0]).astype(int)
+        else:
+            df[col_name] = 0
 
-    # Compute overall work grade (% of points scored across all lessons)
-    work_cols = [col for col in df.columns if 'Work' in col]
-    work_col_name = "Work grade"
-    df[work_col_name] = df[work_cols].sum(axis=1)
-    df[work_col_name] = (.49 + 100*df[work_col_name]/df[work_col_name][0]).astype(int)
+    # Compute overall grade (weighted avg of above super-aggregates)
+    df["Overall grade"] = 0
+    for i in range(len(agg_names)):
+        col_name = agg_names[i] + " grade"
+        col_weight = agg_weights[i]
+        df["Overall grade"] += df[col_name] * col_weight
 
-    # Compute overall grade (weighted avg of assessment and work grades)
-    df["Overall grade"] = df[work_col_name] * work_score_weight + df[assessment_col_name] * assessment_score_weight
-
-    # Save the results to the output file and launch excel
-    df.to_excel(output_file)
+    # Save the results to the output file
+    df.to_csv(output_file)
 
 class TskAggregator:
     def __init__ (self):

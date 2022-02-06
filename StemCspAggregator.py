@@ -41,7 +41,7 @@ def trace(msg):
 
 # The name of this aggregator
 def name ():
-    return "Stem CS Aggregator"
+    return "STEM AP Comp Sci Principals Aggregator"
 
 # Get the default input file = the latest exported STEM CSP grade sheet in the download folder
 def get_default_input_file ():
@@ -103,8 +103,8 @@ def aggregate (input_file, output_file):
 
     df.columns = col_names
 
-    # Keep those columns for which at least half the students have turned something in
-    df.dropna (axis=1, thresh=int(df.shape[0]/2), inplace=True)
+    # Keep those columns for which at least 1/4 the students have turned something in
+    df.dropna (axis=1, thresh=int(df.shape[0]/4), inplace=True)
 
     # Fill in na's with imputed values, using the mean value of the columns. This handled students
     # who joined very late and didn't do initial work, or students who are a little late on recent assignments
