@@ -69,8 +69,7 @@ Some tips/tricks:
 2. If you see "Warning: <student> not found in Roster.csv.", please see SETUP instructions above for what to do
 3. When you run grade aggregation, it will also ask you for the due dates of assignments
     * It persists your answer into a courses.csv file, so you only have to answer this once/aggregated assignment
-    * You must manually edit the file to change the value of answers you have previously given
-    * Type "skip" as your answer if you never want to grade the assignment. E.g., during 2nd semester, you will want to do this for the first semester STEM assignments
+    * Type "X" as your answer if you never want to grade the assignment (e.g., during 2nd semester, you will want to do this for the first semester STEM assignments), or S to temporarily skip (e.g, for assignmens not yet due)
 4. When you are ready to do the bulk import to Synergy, here are a few tips:
     a. Read https://synergy.wesdschools.org/Help_USA/synergysismanuals/grade_book_user_guide_secondary.pdf, starting on page 82
     b. Test out import in the Synergy test environment first: https://wa-bsd405.edupoint.com/train. The username/password are the same as regular synergy.
