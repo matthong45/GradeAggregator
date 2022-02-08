@@ -88,12 +88,22 @@ def get_assignment_due_dates (course, assignments):
     for assignment in assignments:
         if assignment.strip() == "":
             break
-        if not assignment in df.index:
+        if not assignment in df.index:  # No due date entered - get one
             date = "invalid"
-            while date != "skip" and not is_date(date):
-                date = input ("What is the due date for " + assignment + " (d/m/yyyy or type \"skip\" if it should not be graded)? ")
+            while date not in ["X", "S"] and not is_date(date):
+                date = input ("Enter due date for " + assignment + " (d/m/yyyy, X to permanently skip, S to temporarily skip)? ")
             df.loc[assignment] = [date]
             new_dates = True
+        elif str(df.loc[assignment]["ASSIGNMENT_DATE"]) == "X":   # Due date set to perma-skip - ignore assignment
+            continue
+        else:                           # Any other date was entered; reconfirm for now (TODO - optimize this)
+            date = str(df.loc[assignment]["ASSIGNMENT_DATE"])
+            new_date = "invalid"
+            while new_date not in ["X", "S", ""] and not is_date(new_date):
+                new_date = input ("Change due date for " + assignment + " (" + date + ")? CR=keep, d/m/yyyy=new date, X=permanently skip, S=temporarily skip: ")
+            if new_date != "" and new_date != date:
+                df.loc[assignment] = [date]
+                new_dates = True
 
     # If there were any changes, save them back
     if new_dates:
@@ -189,21 +199,25 @@ def agg_to_synergy (input_file, output_dir):
     # Open the input file and convert each of it's rows (one per student) to multiple synergy rows (one per assigment per student)
     df = read_csv(input_file)
     course = None
+    due_dates = None
 
     for r in range(1, df.shape[0]):
         row = df.iloc[r]
         student = row["Student"]
         if not student in roster_dict:
-            print ("Warning: skipping " + student + ". Add an \"Alias\" column entry to Roster.csv if you with to export their grade")
+            print ("Warning: " + student + " not found in Roster.csv. Skipping them for now. Please add a row for them or an 'Alias' column entry to fix this issue")
             continue
         student_info = roster_dict[student]
-        if course is None:
+        if student_info.course == "Audit":
+            continue
+        elif course is None:
             course = student_info.course
         elif course != student_info.course:
             print (roster_file_name + " maps students for this class into to multiple courses: " + course + " and " + student_info.course + " - skipping Synergy bulk import formatting")
             return None
 
-        due_dates = get_assignment_due_dates (course, df.columns[2:])
+        if due_dates is None:
+            due_dates = get_assignment_due_dates (course, df.columns[2:])
 
         for column_name in df.columns[2:]:
             if column_name.strip() == "":       # A blank column is used to separate things that go in Synergy from aggregates of those things
@@ -227,7 +241,7 @@ def agg_to_synergy (input_file, output_dir):
                 print ("Can't parse assignment type for " + assignment_name + " - skipping Synergy bulk import formatting")
                 return None
             assignment_date = due_dates[assignment_name]
-            if assignment_date == "skip":
+            if assignment_date in ["S", "X"]:
                 continue
             output_row = [id, first_name, last_name, assignment_name, assignment_description, overall_score, max_points, assignment_type, assignment_date]
             
