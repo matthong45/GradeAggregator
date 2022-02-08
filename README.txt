@@ -8,10 +8,9 @@ GradeAggregator.py currently works on grading spreadsheets exported from the fol
 * Project STEM AP Comp Sci Principals
 
 These learning platforms have tons of assignment, and it makes no sense to have records for each assignment in Synergy.
-Rather, we aggregate them by (unit, category) for STEM, and by (lesson, category) for TSK.
-For STEM, we aggregate the scores in STEM.
-For TSK, we give assignments TSK aggregation assigns 1 point to each assignment if it was turned in with no syntax errors and has at least half the expected lines of code and/or correct answers.
-Assignments are skipped unless at least 1/4 of students have submitted something. This threshold can be tuned.
+Rather, we aggregate them by (unit, category) for STEM (e.g, "5 Exercises"), and by (lesson, category) for TSK (e.g, "4.1 Assignments").
+Each TSK assignment is scored as 1 point if it was turned in with no syntax errors and has at least half the expected lines of code and/or correct answers; else 0.
+Assignments for all three classes are skipped unless at least 1/4 of students have submitted something. This threshold can be tuned.
 
 GradeAggregator.py looks in the download folder for the latest exported grades spreadsheet from each platform and generates two types aggregates:
 1. Manual import format: For viewing and/or manual import to Synergy. Has one row per student and column per assigment
