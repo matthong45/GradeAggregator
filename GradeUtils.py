@@ -102,7 +102,7 @@ def get_assignment_due_dates (course, assignments):
             while new_date not in ["X", "S", ""] and not is_date(new_date):
                 new_date = input ("Change due date for " + assignment + " (" + date + ")? CR=keep, d/m/yyyy=new date, X=permanently skip, S=temporarily skip: ")
             if new_date != "" and new_date != date:
-                df.loc[assignment] = [date]
+                df.loc[assignment] = [new_date]
                 new_dates = True
 
     # If there were any changes, save them back
