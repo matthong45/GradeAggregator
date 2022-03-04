@@ -68,9 +68,13 @@ def aggregate (input_file, output_file):
     col_names = df.columns.tolist()
     for col_ix in range(len(col_names)):
         col_name = col_names[col_ix]
+        if col_name.startswith("FRQ"):
+            col_names[col_ix] = "drop me"
+            continue
         match = re.search ("\d+", col_name)
         if match is None:
             print ("Warning: can't parse unit number from column " + col_name + ". Skipping....")
+            col_names[col_ix] = "drop me"
             continue
         unit_num = match[0]
         category = None
@@ -80,6 +84,7 @@ def aggregate (input_file, output_file):
                 break
         if category is None:
             print ("Warning: can't parse category from column " + col_name + ". Skipping....")
+            col_names[col_ix] = "drop me"
             continue
         
         new_col_name = unit_num + " " + category
@@ -87,6 +92,7 @@ def aggregate (input_file, output_file):
         trace (new_col_name + "\t\tWas: " + col_name)
 
     df.columns = col_names
+    df.drop("drop me", axis=1, inplace=True)
 
     # Sum up all columns with the same name to produce aggregate points by unit and category
     df = df.groupby(by=df.columns, axis=1).sum()
