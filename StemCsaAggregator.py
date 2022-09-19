@@ -92,7 +92,8 @@ def aggregate (input_file, output_file):
         trace (new_col_name + "\t\tWas: " + col_name)
 
     df.columns = col_names
-    df.drop("drop me", axis=1, inplace=True)
+    if "drop_me" in df.columns:
+        df.drop("drop me", axis=1, inplace=True)
 
     # Sum up all columns with the same name to produce aggregate points by unit and category
     df = df.groupby(by=df.columns, axis=1).sum()
@@ -105,16 +106,19 @@ def aggregate (input_file, output_file):
     for c in cat_info:
         cat = c[0]
         cols = [col for col in df.columns if cat in col]
-        col_name = cat + " grade"
-        df[col_name] = df[cols].sum(axis=1)
-        df[col_name] = (.49 + 100*df[col_name]/df[col_name][0]).astype(int)
+        if (len(cols) > 0):
+            col_name = cat + " grade"
+            df[col_name] = df[cols].sum(axis=1)
+            df[col_name] = (.49 + 100*df[col_name]/df[col_name][0]).astype(int)
 
+    """
     # Finally, create a column of overall score for sanity
     df["   "] = [None] * df.shape[0] # Blank column as separator for the aggregates
     df["Overall grade"] = df[exercise_cat_name + " grade"] * exercise_weight + \
         df[quiz_cat_name + " grade"] * quiz_weight + \
         df[exam_cat_name + " grade"] * exam_weight
     df["Overall grade"] = df["Overall grade"].astype(int)
+    """
 
     # Save the results to the output file and launch excel
     df.to_csv(output_file)

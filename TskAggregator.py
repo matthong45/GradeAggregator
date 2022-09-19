@@ -96,7 +96,7 @@ def aggregate (input_file, output_file):
     df = df.replace(to_replace =' lines of code.*', value = "", regex = True)   # Remove text we don't need
     df = df.replace(to_replace ='\n.*', value = "", regex = True)               # Remove text we don't need
     df = df.replace(to_replace =' \(.+\)', value = "", regex = True)            # Remove text we don't need
-
+    
     # Now all cells have numeric values except for a few cells of the form a/b
     # For Work columns, transform to 1 if a/b > 1/2; else to 0
     # If Assessment columns, transform to a, but remember that column is worth b points
@@ -115,11 +115,11 @@ def aggregate (input_file, output_file):
                 b = int(match[1])
                 if columns[c].find("Assignment") != -1:
                     if a/b >= .5:
-                        df.loc[r][c] = 1
+                        df.at[r,c] = 1    # Was df.loc[r][c] = 1
                     else:
-                        df.loc[r][c] = 0
+                        df.at[r, c] = 0    # As above
                 else:
-                    df.loc[r][c] = a
+                    df.at[r, c] = a        # Ass above
                     max_score[c] = b
     df.columns = columns
 

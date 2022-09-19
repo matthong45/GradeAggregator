@@ -121,10 +121,12 @@ def aggregate (input_file, output_file):
     df["  "] = [None] * df.shape[0] # Blank column as separator for the aggregates
     for cat in cat_order:
         cols = [col for col in df.columns if cat in col]
-        col_name = cat + " grade"
-        df[col_name] = df[cols].sum(axis=1)
-        df[col_name] = (.49 + 100*df[col_name]/df[col_name][0]).astype(int)
+        if (len(cols) > 0):
+            col_name = cat + " grade"
+            df[col_name] = df[cols].sum(axis=1)
+            df[col_name] = (.49 + 100*df[col_name]/df[col_name][0]).astype(int)
 
+    """
     # Finally, create a column of overall score for sanity
     df["   "] = [None] * df.shape[0] # Blank column as separator for the aggregates
     df["Overall grade"] = df[exercise_cat_name + " grade"] * exercise_weight + \
@@ -133,7 +135,8 @@ def aggregate (input_file, output_file):
         df[quiz_cat_name + " grade"] * quiz_weight + \
         df[exam_cat_name + " grade"] * exam_weight
     df["Overall grade"] = df["Overall grade"].astype(int)
-
+    """
+    
     # Save the results to the output file
     df.to_csv(output_file)
 
