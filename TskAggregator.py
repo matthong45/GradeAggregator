@@ -67,7 +67,9 @@ def aggregate (input_file, output_file):
                 lesson = unit_num + "." + l                     # We don't create new lesson aggregate names for the little "P" "PLx, "RA" exercises
         if df.loc[3][i] == "Assessment":
             if df.loc[2][i].startswith("Practice Test"):
-                col_names.append(lesson + " Assignment")        # Treat the practice test like an assignment
+                col_names.append(lesson + " Assignment")        # Treat practice tests like assignments
+            elif df.loc[2][i].endswith("Lesson Check"):
+                col_names.append(lesson + " Assignment")        # Treat the lesson checks like assignments
             elif lesson.endswith("T"):
                 col_names.append(lesson + " Exam")              # Lesson x.T assessments are exams
             else:
