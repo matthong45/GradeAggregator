@@ -7,12 +7,17 @@ Author: Marc Shepard
 For details, please refer to the README.txt file
 """
 
+from multiprocessing import Event
+from typing import List
 import GradeUtils
 from TskAggregator import TskAggregator
 from StemCspAggregator import StemCspAggregator
 from StemCsaAggregator import StemCsaAggregator
-from sys import argv
+from sys import argv, exit
 from os import getcwd, path, chdir
+import tkinter as tk
+
+useGui = False   # Use GUI or old command-line interface?
 
 # Double clicking the file or launching from another directory won't work unless we first "cd" to the app directory
 if len(argv) >= 1:
@@ -22,6 +27,28 @@ if len(argv) >= 1:
     if not path.isabs(dir):
         dir = cwd + "\\" + dir
     chdir(dir)
+
+# Run the GUI
+# https://realpython.com/python-gui-tkinter/
+if useGui:
+    window = tk.Tk()
+    window.title("Grade aggregator")
+
+    # Buttons and labels for each aggregator
+    frm_buttons = tk.Frame(window, relief = tk.RAISED)
+    labels = ["Python grades", "Principals grades", "Comp Sci A grades"]
+    for i in range(len(labels)):
+        frame = tk.Frame(frm_buttons)
+        frame.grid(row=i, column=0, padx=10, pady=10)
+        label = tk.Label(master=frm_buttons, text=labels[i])
+        label.pack()
+        frame = tk.Frame(frm_buttons)
+        frame.grid(row=i, column=1, padx=10, pady=10)
+        button = tk.Button(master=frm_buttons, text="Aggregate")
+        button.pack()
+
+    window.mainloop()
+    exit (0)
 
 # These aggregators do the heavy lifting, in a couse specific manner (since the exported spreadsheets are all quite different)
 aggregators = [TskAggregator(), StemCspAggregator(), StemCsaAggregator()]

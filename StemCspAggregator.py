@@ -30,7 +30,7 @@ exam_weight = .5
     # Category names (what they will be called in output aggregate file)
 exercise_cat_name = "Exercises"
 project_cat_name = "Project"
-performance_cat_name = "Performance"
+performance_cat_name = "Create task"
 quiz_cat_name = "Quizzes"
 exam_cat_name = "Exam"
 
@@ -59,47 +59,69 @@ def aggregate (input_file, output_file):
     df = df.set_index(["Student", "Section"])                   # Index on student name/section
 
     # Change the column names to what we want to aggregate on: <unit #> <category>
-    # Use the fact that STEM orders columns by category and then unit #
-    cat_order = [exercise_cat_name, project_cat_name, quiz_cat_name, exam_cat_name, performance_cat_name]
-    cat_num = 0     # Current index into category_order
-    unit_num = 0    # Current unit number
-    proj_name = None
     col_names = df.columns.tolist()
     for col_ix in range(len(col_names)):
-        col_name = col_names[col_ix]
-        col_name = col_name.replace ("Unit ", "")
-        match = re.search ("^\d+", col_name)
+        col_name = col_names[col_ix].lower().replace("unit ", "")
+        new_col_name = None     # The new column name we will aggregate on
+        
+        # Most columns are exercises, quizzes, or exams starting with the unit number
+        match = re.search ("^(unit )*\d", col_name)
         if match is not None:
-            if int(match[0]) < unit_num:    # If unit number decreased, we must be at a new category
-                cat_num += 1
-                trace ("\nStarting category = " + cat_order[cat_num])
-            if unit_num != int(match[0]):
-                trace ("    Starting unit " + match[0]) # Else it's just a new unit in the same category
-            unit_num = int(match[0])
-        elif cat_num == 0 and col_name.find("Milestone") != -1: # First project is unit 2
-            cat_num += 1
-            unit_num = 2
-            proj_name = col_name.split()[0]
-            trace ("\nStarting category = " + cat_order[cat_num])
-            trace ("    Starting unit 2: " + proj_name)
-        if cat_num == 1:
-            next_proj_name = col_name.split()[0].split(":")[0]
-            if proj_name != next_proj_name:  # Each project gets a new unit number
-                unit_num += 1
-                proj_name = next_proj_name
-                trace ("    Starting unit " + str(unit_num) + ": " + proj_name)
-        if cat_num == 2:
-            assert col_name.find("Quiz") != -1
-        if cat_num == 3 and col_name.find("Exam") == -1:
-            assert col_name.find("Create") != -1
-            cat_num += 1
-            trace ("\nStarting category = " + cat_order[cat_num])
-        assert unit_num <= 6
-        new_col_name = cat_order[cat_num]
-        if cat_num != 4:
-                new_col_name = str(unit_num) + " " + new_col_name
-        col_names[col_ix] = new_col_name
-        trace (new_col_name + "\t\tWas: " + col_name)
+            if "exercise" in col_name or "ap-style" in col_name or "review" in col_name or "additional practice" in col_name:
+                new_col_name = match[0] + " " + exercise_cat_name
+            elif "quiz" in col_name:
+                new_col_name = match[0] + " " + quiz_cat_name
+            elif "exam" in col_name:
+                new_col_name = match[0] + " " + exam_cat_name
+            elif "0.5 " in col_name or "0.6 " in col_name:
+                new_col_name = "1 " + exercise_cat_name
+
+        # big picture exercises don't include the unit number - must figure it out from the name
+        elif "big picture" in col_name:
+            if "collaboration" in col_name:
+                new_col_name = "2 " + exercise_cat_name
+            if "moore" in col_name:
+                new_col_name = "2 " + exercise_cat_name
+            elif "reselling" in col_name:
+                new_col_name = "3 " + exercise_cat_name
+            elif "ethics" in col_name or "intellectual" in col_name:
+                new_col_name = "4 " + exercise_cat_name
+            elif "data" in col_name:
+                new_col_name = "5 " + exercise_cat_name  
+            elif "innovation" in col_name or "divide" in col_name or "neutrality" in col_name:
+                new_col_name = "5 " + exercise_cat_name
+
+        # projects don't include the unit number - must figure it out from the name
+        elif "milestone" in col_name or "final project submission" in col_name:
+            if "password" in col_name:
+                new_col_name = "2 " + project_cat_name
+            elif "unintend" in col_name:
+                new_col_name = "3 " + project_cat_name
+            elif "image" in col_name:
+                new_col_name = "4 " + project_cat_name
+            elif "tedx" in col_name:
+                new_col_name = "5 " + project_cat_name
+            elif "exploring" in col_name:
+                new_col_name = "6 " + project_cat_name
+
+        # Some columns called "tedxkinda: xxx" that are just unit 5 exercises
+        elif "tedxkinda: " in col_name:
+            new_col_name = "5 " + exercise_cat_name
+
+        # Columns wih the name "question type: " are unit 7 AP review exercises
+        elif "question type: " in col_name or "ap cb practice" in col_name:
+            new_col_name = "7 " + exercise_cat_name
+
+        # And finally, the following are create-task assignments
+        if "create task" in col_name or "mini create" in col_name or "peer review" in col_name:
+            new_col_name = performance_cat_name
+
+        # Some of the tedxkind
+        if new_col_name is None:
+            print ("Can't translate\t\t: " + col_name, file=sys.stderr)
+        else:
+            col_names[col_ix] = new_col_name
+            trace (new_col_name + "\t\t<- " + col_name)
 
     df.columns = col_names
 
@@ -116,26 +138,6 @@ def aggregate (input_file, output_file):
 
     # Convert everything to an int, since imputed values create messy decimals
     df = df.astype(int)
-
-    # Also create columns showing overall "score" (percent points) by category, across all units
-    df["  "] = [None] * df.shape[0] # Blank column as separator for the aggregates
-    for cat in cat_order:
-        cols = [col for col in df.columns if cat in col]
-        if (len(cols) > 0):
-            col_name = cat + " grade"
-            df[col_name] = df[cols].sum(axis=1)
-            df[col_name] = (.49 + 100*df[col_name]/df[col_name][0]).astype(int)
-
-    """
-    # Finally, create a column of overall score for sanity
-    df["   "] = [None] * df.shape[0] # Blank column as separator for the aggregates
-    df["Overall grade"] = df[exercise_cat_name + " grade"] * exercise_weight + \
-        df[project_cat_name + " grade"] * project_weight + \
-        df[performance_cat_name + " grade"] * performance_weight + \
-        df[quiz_cat_name + " grade"] * quiz_weight + \
-        df[exam_cat_name + " grade"] * exam_weight
-    df["Overall grade"] = df["Overall grade"].astype(int)
-    """
     
     # Save the results to the output file
     df.to_csv(output_file)
