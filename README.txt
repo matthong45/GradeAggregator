@@ -77,4 +77,3 @@ Some tips/tricks:
 
 BACKLOG
 * Auto-populate assignment due dates for TSK (rather than asking)
-* Add GUI front end

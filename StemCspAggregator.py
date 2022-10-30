@@ -18,36 +18,28 @@ import pandas as pd
 import re
 import GradeUtils
 import datetime
+from GradeUtils import trace, println
 
-# Constants
-trace_debugging = False
-    # Category weights (towards overall grade)
-exercise_weight = .1
-project_weight = .1
-performance_weight = .1
-quiz_weight = .2
-exam_weight = .5
-    # Category names (what they will be called in output aggregate file)
+# Category names (what they will be called in output aggregate file)
 exercise_cat_name = "Exercises"
 project_cat_name = "Project"
 performance_cat_name = "Create task"
 quiz_cat_name = "Quizzes"
 exam_cat_name = "Exam"
 
-# Function for trace debugging
-def trace(msg):
-    if trace_debugging:
-        print (msg)
-
 # The name of this aggregator
 def name ():
     return "STEM AP Comp Sci Principals Aggregator"
 
-# Get the default input file = the latest exported STEM CSP grade sheet in the download folder
-def get_default_input_file ():
+# The file pattern we check for files exported from STEM
+def get_input_file_pattern ():
     year = str(datetime.datetime.now().year)
     download_dir = GradeUtils.get_download_dir()
-    return GradeUtils.get_latest (download_dir + "\\" + year + "*Grades-AP_CS_Principles*.csv")
+    return download_dir + "\\" + year + "*Grades-AP_CS_Principles*.csv"
+
+# Get the default input file = the latest exported STEM CSP grade sheet in the download folder
+def get_default_input_file ():
+    return GradeUtils.get_latest (get_input_file_pattern ())
 
 # Aggregate an input file into an output file
 def aggregate (input_file, output_file):
@@ -118,7 +110,7 @@ def aggregate (input_file, output_file):
 
         # Some of the tedxkind
         if new_col_name is None:
-            print ("Can't translate\t\t: " + col_name, file=sys.stderr)
+            println ("Can't translate\t\t: " + col_name, file=sys.stderr)
         else:
             col_names[col_ix] = new_col_name
             trace (new_col_name + "\t\t<- " + col_name)
@@ -148,3 +140,4 @@ class StemCspAggregator:
         self.name = name
         self.aggregate = aggregate
         self.get_default_input_file = get_default_input_file
+        self.get_input_file_pattern = get_input_file_pattern

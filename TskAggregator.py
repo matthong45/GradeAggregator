@@ -26,20 +26,20 @@ pip install openpyxl    - to parse .xlsx files
 import pandas as pd
 import re
 import GradeUtils
-
-# Configuration variables
-assignment_score_weight = .5
-exam_score_weight       = .3
-quiz_score_weight       = .2
+from GradeUtils import trace, println
 
 # The name of this aggregator
 def name ():
     return "Tech Smart Kids Aggregator"
 
+# The file pattern we check for files exported from STEM
+def get_input_file_pattern ():
+    download_dir = GradeUtils.get_download_dir()
+    return download_dir + r"\CS20*.xlsx"
+
 # Get the default input file = the latest exported TSK grade sheet in the download folder
 def get_default_input_file ():
-    download_dir = GradeUtils.get_download_dir()
-    return GradeUtils.get_latest (download_dir + r"\CS20*.xlsx")
+    return GradeUtils.get_latest (get_input_file_pattern ())
 
 # Aggregate an input file into an output file
 def aggregate (input_file, output_file):
@@ -138,30 +138,6 @@ def aggregate (input_file, output_file):
     # Add a dummy section column at the front
     df.insert(0, "Section", ["Default"] * df.shape[0])
 
-    # Blank column as separator for the score aggregates (aggregates of aggregates)
-    df["  "] = [None] * df.shape[0]
-
-    # A couple of variables to help with computation
-    agg_names = ["Exam", "Quiz", "Assignment"]
-    agg_weights = [exam_score_weight, assignment_score_weight, quiz_score_weight]
-    
-    # Compute overall exam grade (% of points scored across all lessons)
-    for i in range(len(agg_names)):
-        cols = [col for col in df.columns if agg_names[i] in col]
-        col_name = agg_names[i] + " grade"
-        df[col_name] = df[cols].sum(axis=1)
-        if df[col_name][0] != 0:
-            df[col_name] = (.49 + 100*df[col_name]/df[col_name][0]).astype(int)
-        else:
-            df[col_name] = 0
-
-    # Compute overall grade (weighted avg of above super-aggregates)
-    df["Overall grade"] = 0
-    for i in range(len(agg_names)):
-        col_name = agg_names[i] + " grade"
-        col_weight = agg_weights[i]
-        df["Overall grade"] += df[col_name] * col_weight
-
     # Save the results to the output file
     df.to_csv(output_file)
 
@@ -170,3 +146,4 @@ class TskAggregator:
         self.name = name
         self.aggregate = aggregate
         self.get_default_input_file = get_default_input_file
+        self.get_input_file_pattern = get_input_file_pattern

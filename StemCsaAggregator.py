@@ -18,32 +18,28 @@ import pandas as pd
 import re
 import datetime
 import GradeUtils
+from GradeUtils import trace, println
 
-# Constants
-trace_debugging = False
-    # Category weights (towards overall grade)
-exercise_weight = .1
-quiz_weight = .3
-exam_weight = .6
-    # Category names (what they will be called in output aggregate file)
+# Category names (what they will be called in output aggregate file)
 exercise_cat_name = "Exercises"
 quiz_cat_name = "Quiz and assignment"
 exam_cat_name = "Exam"
-
-# Function for trace debugging
-def trace(msg):
-    if trace_debugging:
-        print (msg)
 
 # The name of this aggregator
 def name ():
     return "STEM AP Comp Sci A Aggregator"
 
+# The file pattern we check for files exported from STEM
+def get_input_file_pattern ():
+    year = str(datetime.datetime.now().year)
+    download_dir = GradeUtils.get_download_dir()
+    return download_dir + "\\" + year + "*Grades-AP_CS_A*.csv"
+
 # Get the default input file = the latest exported STEM CSP grade sheet in the download folder
 def get_default_input_file ():
     year = str(datetime.datetime.now().year)
     download_dir = GradeUtils.get_download_dir()
-    return GradeUtils.get_latest (download_dir + "\\" + year + "*Grades-AP_CS_A*.csv")
+    return GradeUtils.get_latest (get_input_file_pattern ())
 
 # Aggregate an input file into an output file
 def aggregate (input_file, output_file):
@@ -73,7 +69,7 @@ def aggregate (input_file, output_file):
             continue
         match = re.search ("\d+", col_name)
         if match is None:
-            print ("Warning: can't parse unit number from column " + col_name + ". Skipping....")
+            println ("Warning: can't parse unit number from column " + col_name + ". Skipping....")
             col_names[col_ix] = "drop me"
             continue
         unit_num = match[0]
@@ -83,7 +79,7 @@ def aggregate (input_file, output_file):
                 category = cat[0]
                 break
         if category is None:
-            print ("Warning: can't parse category from column " + col_name + ". Skipping....")
+            println ("Warning: can't parse category from column " + col_name + ". Skipping....")
             col_names[col_ix] = "drop me"
             continue
         
@@ -111,15 +107,6 @@ def aggregate (input_file, output_file):
             df[col_name] = df[cols].sum(axis=1)
             df[col_name] = (.49 + 100*df[col_name]/df[col_name][0]).astype(int)
 
-    """
-    # Finally, create a column of overall score for sanity
-    df["   "] = [None] * df.shape[0] # Blank column as separator for the aggregates
-    df["Overall grade"] = df[exercise_cat_name + " grade"] * exercise_weight + \
-        df[quiz_cat_name + " grade"] * quiz_weight + \
-        df[exam_cat_name + " grade"] * exam_weight
-    df["Overall grade"] = df["Overall grade"].astype(int)
-    """
-
     # Save the results to the output file and launch excel
     df.to_csv(output_file)
 
@@ -129,3 +116,4 @@ class StemCsaAggregator:
         self.name = name
         self.aggregate = aggregate
         self.get_default_input_file = get_default_input_file
+        self.get_input_file_pattern = get_input_file_pattern
