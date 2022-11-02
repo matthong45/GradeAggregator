@@ -97,16 +97,6 @@ def aggregate (input_file, output_file):
     # Convert everything to an int, since imputed values create messy decimals
     df = df.astype(int)
 
-    # Also create columns showing overall "score" (percent points) by category, across all units
-    df["  "] = [None] * df.shape[0] # Blank column as separator for the aggregates
-    for c in cat_info:
-        cat = c[0]
-        cols = [col for col in df.columns if cat in col]
-        if (len(cols) > 0):
-            col_name = cat + " grade"
-            df[col_name] = df[cols].sum(axis=1)
-            df[col_name] = (.49 + 100*df[col_name]/df[col_name][0]).astype(int)
-
     # Save the results to the output file and launch excel
     df.to_csv(output_file)
 
