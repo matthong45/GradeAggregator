@@ -19,6 +19,7 @@ import re
 import GradeUtils
 import datetime
 from GradeUtils import trace, println
+import sys
 
 # Category names (what they will be called in output aggregate file)
 exercise_cat_name = "Exercises"

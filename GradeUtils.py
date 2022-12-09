@@ -238,7 +238,7 @@ def get_assignment_type (course, assignment):
         return "Summative Assessment"
     elif type == "Project":
         return "Projects"
-    elif type == "Performance":
+    elif type == "Create task" or assignment == "Create task":
         return "Performance task"
     else:
         return None
