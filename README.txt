@@ -56,23 +56,18 @@ USAGE
 Once configured, the script is pretty easy to run:
 1. Export grade spreadsheets from the learning platform
 2. Launch GradeAggregator.py. If you have file association set up, you can just click on the file from explorer.
-For each class (TSK, CSA, Principals) - this script just skips the class if there is no exported grading spreadsheet for it in the download folder.
-If there is an exported spreadsheet, it finds the latest one and compares it's timestamp to the timestamp of the latest aggregation file to determine if
-reaggregation is needed. If it is needed, it does the reaggregation and then launches Excel so you can look at the results.
-It will also ask you if you want to manually reaggregate anyhow (generally you won't want to - I put this option in to help with development).
+3. Click on the class you want to create aggregates for (corresponding to what you exported in step 1). It will then run and pop up an aggregate spreadsheet for you to view.
+  3a. If you have configured Synergy Bulk Export, another pop-up will appear asking you for assignment due dates. Add the due dates for the assignments you want to import to Synergy and clear due dates for assignments you don't want to import (e.g, older assignments, and perhaps the most recent assignment if it's not due yet). Then close the window by clicking the "x" button. It will then run and generate a Synergy Bulk import spreadsheet.
 
 Some tips/tricks:
 1. It's easier to view the manual excel spreadsheet after doing these steps:
     a. Right-sizing the columns by selecting everything (upper left corner), then home/format/auto-fit column width
     b. Freezing the student name column when you scroll: View/freeze frame/freeze first column
 2. If you see "Warning: <student> not found in Roster.csv.", please see SETUP instructions above for what to do
-3. When you run grade aggregation, it will also ask you for the due dates of assignments
-    * It persists your answer into a courses.csv file, so you only have to answer this once/aggregated assignment
-    * Type "X" as your answer if you never want to grade the assignment (e.g., during 2nd semester, you will want to do this for the first semester STEM assignments), or S to temporarily skip (e.g, for assignmens not yet due)
+3. When you run grade aggregation, it will also ask you for the due dates of assignments. Leave the dates of older assignments blank; more efficient
 4. When you are ready to do the bulk import to Synergy, here are a few tips:
     a. Read https://synergy.wesdschools.org/Help_USA/synergysismanuals/grade_book_user_guide_secondary.pdf, starting on page 82
-    b. Test out import in the Synergy test environment first: https://wa-bsd405.edupoint.com/train. The username/password are the same as regular synergy.
-    c. On the bulk import screen, check the right "Upload Import File" options; "add assignments not found in current class", "overwrite existing scores", and "show detailed error messages" are good ones
+    b. On the bulk import screen, check the right "Upload Import File" options; "add assignments not found in current class", "overwrite existing scores", and "show detailed error messages" are good ones
     d. Note: The "primary key" for the assignment appears to be the assignment name; so you change the due date or re-import after more assignments are done (so a higher max score), those will get updated automatically, those get updated
 
 BACKLOG
