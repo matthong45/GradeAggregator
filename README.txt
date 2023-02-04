@@ -64,7 +64,9 @@ Some tips/tricks:
     a. Right-sizing the columns by selecting everything (upper left corner), then home/format/auto-fit column width
     b. Freezing the student name column when you scroll: View/freeze frame/freeze first column
 2. If you see "Warning: <student> not found in Roster.csv.", please see SETUP instructions above for what to do
-3. When you run grade aggregation, it will also ask you for the due dates of assignments. Leave the dates of older assignments blank; more efficient
+3. When you run grade aggregation, it will also ask you for the due dates of assignments.
+    a. Leave the dates of older assignments blank; more efficient
+    b. You have to close the window (click the window's "x" button) to have it read the dates and aggregate (sorry for the poor UX - I'll add a proper aggregate button)
 4. When you are ready to do the bulk import to Synergy, here are a few tips:
     a. Read https://synergy.wesdschools.org/Help_USA/synergysismanuals/grade_book_user_guide_secondary.pdf, starting on page 82
     b. On the bulk import screen, check the right "Upload Import File" options; "add assignments not found in current class", "overwrite existing scores", and "show detailed error messages" are good ones
@@ -72,3 +74,4 @@ Some tips/tricks:
 
 BACKLOG
 * Auto-populate assignment due dates for TSK (rather than asking)
+* Add an "aggregate" button to the Synergy bulk export dates dialog (rather than having closing of the window imply aggregation start)
