@@ -55,7 +55,7 @@ Once you have run grade aggregation on all your classes without errors, you are 
 USAGE
 Once configured, the script is pretty easy to run:
 1. Export grade spreadsheets from the learning platform
-2. Launch GradeAggregator.py. If you have file association set up, you can just click on the file from explorer.
+2. Launch GradeAggregator.pyw. If you have file association set up, you can just click on the file from explorer.
 3. Click on the class you want to create aggregates for (corresponding to what you exported in step 1). It will then run and pop up an aggregate spreadsheet for you to view.
   3a. If you have configured Synergy Bulk Export, another pop-up will appear asking you for assignment due dates. Add the due dates for the assignments you want to import to Synergy and clear due dates for assignments you don't want to import (e.g, older assignments, and perhaps the most recent assignment if it's not due yet). Then close the window by clicking the "x" button. It will then run and generate a Synergy Bulk import spreadsheet.
 
