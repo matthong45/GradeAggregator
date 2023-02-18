@@ -49,7 +49,7 @@ To enable synergy bulk import aggregates, the following additional one-time conf
 3. When you run grade aggregation, you will likely get a warning message like this the first time: "Warning: <student> not found in Roster.csv." There are three possible reasons for this, each with a different solution.
     * If the student enrolled late (after you create Roster.csv), then add a row to Roster.csv for them
     * If the student used a slightly different name in the learning platform, add <student> (exactly as it appears in the warning) to the "Alias" column in the corresonding row for that student in Roster.csv.
-    * If the student is not getting graded (e.g., STEM's "Test Student", or someone auditing your class), then make sure they have a row in Roster.csv and the course name is "AUDIT" (all caps)
+    * If the student is not getting graded (e.g., STEM's "Test Student", or someone auditing your class), then make sure they have a row in Roster.csv and the course name is "audit"
 Once you have run grade aggregation on all your classes without errors, you are ready for the USAGE section.
 
 USAGE

@@ -269,7 +269,7 @@ def agg_to_synergy (input_file : str, output_dir : str, due_date_callback : Call
             println ("Warning: " + student + " not found in Roster.csv. Skipping them for now. Please add a row for them or an 'Alias' column entry to fix this issue")
             continue
         student_info = roster_dict[student]
-        if student_info.course == "Audit":
+        if student_info.course.lower() == "audit":
             continue
         elif course is None:
             course = student_info.course

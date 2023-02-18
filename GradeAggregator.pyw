@@ -131,7 +131,7 @@ def help_btn_onclick():
 def python_btn_onclick():
     run_aggregator(TskAggregator())
 
-def principals_btn_onclick():
+def principles_btn_onclick():
     run_aggregator(StemCspAggregator())
 
 def csa_btn_onclick():
@@ -149,7 +149,7 @@ if useGui:
 
     # Second row are buttons for aggregator + a help button
     tk.Button(frame, text="Python",     command=python_btn_onclick)    .grid(row=1, column=0, pady = 10)
-    tk.Button(frame, text="Principals", command=principals_btn_onclick).grid(row=1, column=1, pady = 10)
+    tk.Button(frame, text="Principles", command=principles_btn_onclick).grid(row=1, column=1, pady = 10)
     tk.Button(frame, text="Comp Sci A", command=csa_btn_onclick)       .grid(row=1, column=2, pady = 10)
     tk.Button(frame, text="Help",       command=help_btn_onclick)      .grid(row=1, column=3, pady = 10)
 
