@@ -88,8 +88,9 @@ def aggregate (input_file, output_file):
         trace (new_col_name + "\t\tWas: " + col_name)
 
     df.columns = col_names
-    if "drop_me" in df.columns:
-        df.drop("drop me", axis=1, inplace=True)
+
+    # drop all columns named "drop me"
+    df = df.loc[:, df.columns != "drop me"]
 
     # Sum up all columns with the same name to produce aggregate points by unit and category
     df = df.groupby(by=df.columns, axis=1).sum()
