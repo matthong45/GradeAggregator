@@ -93,6 +93,7 @@ def aggregate (input_file, output_file):
     # Assessment columns are scored based on number of questions answered correctly
     df = df.fillna(0)                                                           # Not started = 0
     df = df.replace(to_replace ='In progress', value = 0, regex = True)         # In progress = 0
+    df = df.replace(to_replace ='In Progress', value = 0, regex = True)         # In Progress = 0
     df = df.replace(to_replace ='.*Syntax error.*', value = 0, regex = True)    # Syntax error = 0
     df = df.replace(to_replace ='Turned In', value = 1, regex = True)           # Turned in = 1
     df = df.replace(to_replace =' lines of code.*', value = "", regex = True)   # Remove text we don't need

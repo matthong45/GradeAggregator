@@ -33,7 +33,7 @@ def name ():
 def get_input_file_pattern ():
     year = str(datetime.datetime.now().year)
     download_dir = GradeUtils.get_download_dir()
-    return download_dir + "\\" + year + "*Grades-AP_CS_A*.csv"
+    return download_dir + "\\" + year + "*Grades-*AP_CS_A*.csv"
 
 # Get the default input file = the latest exported STEM CSP grade sheet in the download folder
 def get_default_input_file ():
